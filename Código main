@@ -1,0 +1,222 @@
+import discord, pyttsx3, requests, random
+from discord.ext import commands, tasks # Módulo para controlar el bot basado en comandos
+
+intents = discord.Intents.default()  # Configurar los permisos para el bot
+intents.message_content = True  # Habilitar la capacidad de leer el contenido de los mensajes
+bot = commands.Bot(command_prefix="!", intents=intents)  # Crear un bot con el prefijo de comando especificado
+API_KEY = "d1c80db267d6867e0ada26429c402153"
+
+@bot.event
+async def on_ready():
+    print("Estoy conectado y funcionando 😎") #verificación del funcionamiento del bot
+
+def obtener_clima(ciudad):
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={ciudad}&appid={API_KEY}&lang=es&units=metric"
+    respuesta = requests.get(url)
+    
+    if respuesta.status_code == 200:
+        datos = respuesta.json()
+        clima = datos["weather"][0]["description"].capitalize()
+        temperatura = datos["main"]["temp"]
+        # Consejo divertido según la temperatura
+        if temperatura < 15:
+            consejo = "Hace frío , ponte un abrigo."
+        elif temperatura < 25:
+            consejo = "Clima agradable , disfruta tu día."
+        else:
+            consejo = "Hace calor , toma mucha agua."
+        return f"En **{ciudad}** está {clima} con {temperatura}°C.\n {consejo}"
+    else:
+        return "No encontré esa ciudad, inténtalo de nuevo."
+
+@bot.command()
+async def clima(ctx, *, ciudad: str = None):
+    if ciudad is None:
+        await ctx.send("Escribe una ciudad después de `!clima`, por ejemplo: `!clima Bogotá`")
+    else:
+        clima_info = obtener_clima(ciudad)
+        engine = pyttsx3.init()
+        word = clima_info
+        engine.say(word)
+        engine.save_to_file(word, 'clima.mp3')
+        engine.runAndWait()
+
+        await ctx.send(clima_info)
+        await ctx.send(file=discord.File('clima.mp3'))
+
+# ----- MATERIALES Y SUS CONSEJOS -----
+INFO_MATERIALES = {
+    "papel": {
+        "reciclable": True,
+        "consejos": [
+            "Usa ambos lados antes de botarlo.",
+            "Convierte papeles viejos en notas pequeñas.",
+            "Haz origami como grullas, estrellas o flores.",
+            "Píntalo y conviértelo en tu propio papel de regalo."
+        ]
+    },
+
+    "metal": {
+        "reciclable": True,
+        "consejos": [
+            "Limpia las latas antes de reciclarlas.",
+            "Písalas para reducir su volumen.",
+            "Haz una casita de pájaros con una lata grande.",
+            "Convierte las latas en macetas decoradas."
+        ]
+    },
+
+    "vidrio": {
+        "reciclable": True,
+        "consejos": [
+            "Enjuaga los frascos antes de reciclarlos.",
+            "Convierte frascos en lámparas con luces LED.",
+            "Haz un mini terrario dentro de un frasco.",
+            "Úsalos como potes para almacenar cosas."
+        ]
+    },
+
+    "plástico": {
+        "reciclable": True,
+        "consejos": [
+            "Reduce el uso de botellas desechables.",
+            "Reutiliza botellas para hacer macetas pequeñas.",
+            "Haz un comedero para pájaros con una botella.",
+            "Convierte botellas en portalápices decorados."
+        ]
+    },
+
+    "orgánico": {
+        "reciclable": False,
+        "consejos": [
+            "Convierte restos orgánicos en compost para tus plantas.",
+            "Haz abono natural con residuos de frutas y verduras.",
+            "Utiliza cáscaras de huevo trituradas como fertilizante.",
+            "Haz un pequeño lombricario casero para compostaje."
+        ]
+    },
+
+    "batería": {
+        "reciclable": False,
+        "consejos": [
+            "Llévalas a un punto de reciclaje especial, nunca las botes a la basura.",
+            "Guárdalas en un frasco hasta acumular varias y reciclarlas juntas.",
+            "Reemplázalas por baterías recargables.",
+            "Evita dejarlas en lugares húmedos porque pueden gotear químicos."
+        ]
+    },
+
+    "cartón": {
+        "reciclable": True,
+        "consejos": [
+            "Aplástalo para que ocupe menos espacio al reciclar.",
+            "Convierte cajas en organizadores de escritorio.",
+            "Haz una maqueta o diorama creativo con cartón.",
+            "Transforma una caja en una casita o túnel para tu mascota."
+        ]
+    }
+}
+# ----- FRASES AMBIENTALES PARA SPAM AUTOMÁTICO -----
+FRASES_ECO = [
+    "¿Sabías que cada botella que tiras puede tardar 450 años en desaparecer?",
+    "Apagar una luz que no usas reduce contaminación al instante",
+    "Reciclar una lata ahorra energía suficiente para encender un televisor por 3 horas",
+    "Los océanos están llenos de plástico… ayudemos reduciendo su uso",
+    "Caminar cuando puedas reduce tu huella de carbono y mejora tu salud",
+    "Plantar árboles ayuda a limpiar el aire que respiramos",
+    "Cada tonelada de papel reciclado salva 17 árboles",
+    "Cerrar el caño mientras te cepillas ahorra hasta 30 litros de agua",
+    "Un árbol adulto puede absorber 22 kg de CO₂ al año",
+    "El 91% del plástico del mundo no se recicla",
+    "Apagar tu computadora por la noche ahorra mucha energía",
+    "Una ducha de 5 minutos usa menos agua que llenar una tina",
+    "Los bosques producen el 40% del oxígeno del planeta",
+    "Usar una botella reutilizable evita cientos de desechables al año",
+    "El vidrio tarda más de 4,000 años en descomponerse",
+    "La contaminación del aire causa 7 millones de muertes al año",
+    "Elegir productos locales reduce emisiones de transporte",
+    "Reciclar papel reduce un 70% de consumo de energía",
+    "Un tercio de los alimentos se desperdicia cada año",
+    "El 80% de la basura en el mar proviene de actividades humanas",
+    "Cada grado que bajas en la ducha ahorra energía",
+    "Los océanos absorben el 30% del CO₂ que producimos",
+    "Usar bolsas reutilizables evita 500 bolsas plásticas por persona al año",
+    "El 75% de los residuos electrónicos NO se reciclan",
+    "Cargar el celular consume menos energía que dejar el cargador enchufado",
+    "La bicicleta es el transporte más ecológico del mundo",
+]
+
+# ----- TAREA AUTOMÁTICA -----
+@tasks.loop(minutes=25)  # cada 25 minutos
+async def eco_spam():
+    frase = random.choice(FRASES_ECO)
+
+    for guild in bot.guilds:  # enviar a TODOS LOS SERVIDORES donde esté el bot
+        canal = guild.text_channels[0]  # primer canal del server
+
+        # Genera audio
+        engine = pyttsx3.init()
+        engine.save_to_file(frase, "eco.mp3")
+        engine.runAndWait()
+
+        try:
+            await canal.send(f"♻️ **Dato ecológico:** {frase}")
+            await canal.send(file=discord.File("eco.mp3"))
+        except:
+            pass  # por si el bot no puede escribir en ese canal
+
+@bot.event
+async def on_ready():
+    print("Bot activo 🌱")
+    eco_spam.start()
+
+@bot.command() #Comando para obtener información sobre materiales reciclables
+async def material(ctx, *, nombre: str = None):
+
+    if nombre is None:
+        return await ctx.send("Escribe un material: `!material papel`, `!material plástico`, etc.")
+
+    nombre = nombre.lower()
+
+    if nombre not in INFO_MATERIALES:
+        return await ctx.send("No conozco ese material. Prueba con materiales como: papel, plástico, vidrio, metal, orgánico, batería y cartón.")
+
+    info = INFO_MATERIALES[nombre]
+
+    reciclable = "Sí es reciclable" if info["reciclable"] else "No es reciclable"
+
+    consejo = random.choice(info["consejos"])
+
+    texto = (
+        f"**Material:** {nombre.capitalize()}\n"
+        f"{reciclable}\n"
+        f" *{consejo}*"
+    )
+    # Generar audio
+    engine = pyttsx3.init()
+    engine.save_to_file(texto, "material.mp3")
+    engine.runAndWait()
+
+    await ctx.send(texto)
+    await ctx.send(file=discord.File("material.mp3"))
+
+@bot.command()
+async def comandos(ctx):
+    print("Alguien pidió la lista de comandos")
+    texto = (
+        "**Lista de comandos disponibles:**\n"
+        "`!clima [ciudad]` - Obtén el clima actual de una ciudad.\n"
+        "`!material [nombre del material]` - Información y consejos sobre reciclaje de materiales.\n"
+        "`!comandos` - Muestra esta lista de comandos."
+    )
+    # Generar audio
+    engine = pyttsx3.init()
+    engine.save_to_file(texto, "info.mp3")
+    engine.runAndWait()
+
+    await ctx.send(texto)
+    await ctx.send(file=discord.File("info.mp3"))
+
+
+
+bot.run("TU TOKEN")  # Reemplaza con el token de tu bot
