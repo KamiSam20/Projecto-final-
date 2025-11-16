@@ -6,3 +6,4 @@
 - Usaré VISIÓN POR ORDENADOR (google teacheble machine)
 - Usaré SINTETISADOR DE VOZ (pttsx3)
 - Usaré UNA API SOBRE EL MEDIO AMBIENTE (request)
+- Usaré UN RANDOMIZADOR(random)
